@@ -1,0 +1,49 @@
+Lesson 1: Review of Algebra 1
+Review basic algebra concepts like solving equations and graphing lines.
+Lesson 2: Quadratic Equations
+ Learn how to graph and solve quadratic equations and identify their parts.
+Lesson 3: Factoring 
+Practice different factoring methods to simplify and solve equations.
+Lesson 4: Complex Numbers
+ Understand imaginary numbers and how to add, subtract, and multiply them.
+Lesson 5: Polynomials
+ Learn how to perform operations on polynomials and find their zeros.
+Lesson 6: Rational Expressions
+ Simplify and solve equations that have fractions with variables.
+Lesson 7: Exponents and Exponential Functions
+Study the rules of exponents and exponential growth or decay.
+Lesson 8: Logarithms
+Learn what logarithms are and how to use them to solve equations.
+Lesson 9: Systems of Equations
+Solve systems of linear and nonlinear equations using different methods.
+Lesson 10: Sequences and Series
+Explore arithmetic and geometric patterns and find their sums.
+Lesson 11: Radical Expressions
+Simplify and solve equations involving square roots and other radicals.
+Lesson 12: Unit Review
+
+Algebra 1:
+Lesson 1: Variable
+We can like teach then about variables and stuff and the exercises will be like to find the variable in the equation
+Lesson 2: Solving the Basic Stuff
+Like solving one step equations and the exercises would be to actually solve them
+Lesson 3: * and / equations
+We teach them how to solve multiplication and division equations and the exercise would be solving them and seeing their understanding
+Lesson 4: Combining Like terms
+simplifying the equations and the exercises would be a few equations and then a multiple choice
+Lesson 5: Inequalities
+We teach them what are inequalities and the exercise would be multiple choice and they like pick out which one is the inequality
+Lesson 6: Graphing Inequalities
+We show them how to graph inequalities and the exercise would be to graph inequalities and find which one is a correctly graphed inequality
+Lesson 7: Multistep inequalities
+we show them how to solve multistep inequalities and the exercise would be to solve them and a question to test their understanding
+Lesson 8: Compound Inequalities
+We teach them conjunction and disjunction or something and they have to find out which one is which and we can have some problems where they solve it
+Lesson 9: Absolute Value
+We teach them what absolute value is and they have to describe it and a multichoice problem to pick which one is absolute value
+Lesson 10: Absolute Value Equations
+review what equations were and teach them how to solve and they have multiple choice questions and they solve equations
+Lesson 11: Absolute Value Inequalities
+We teach them how to solve and the exercises would be to solve and a question that checks their understanding
+Review:
+We do a minitest mode and we grade them at the end
