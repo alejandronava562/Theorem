@@ -1,6 +1,3 @@
-from openai import OpenAI
-import ai_wrapper
-
 def run_quiz(lessoncontent: list, input_fn=input, print_fn=print) -> int:
     """
     
