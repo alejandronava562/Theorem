@@ -33,13 +33,12 @@ def run_quiz(lessoncontent: list, input_fn=input, print_fn=print, tutor_callback
         else:
             coins -= 5
             print_fn("Incorrect: -5 coins")
-
-        if tutor_callback:
-            feedback = tutor_callback(q, answer)
-            if feedback:
-                printable = feedback if isinstance(feedback, str) else json.dumps(feedback, indent=2)
-                print_fn("\nAI Tutor:")
-                print_fn(printable)
+            if tutor_callback:
+                feedback = tutor_callback(q, answer)
+                if feedback:
+                    printable = feedback if isinstance(feedback, str) else json.dumps(feedback, indent=2)
+                    print_fn("\nAI Tutor:")
+                    print_fn(printable)
 
 
     
