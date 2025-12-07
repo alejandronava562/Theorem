@@ -4,7 +4,7 @@
 # This Flask layer only adapts the CLI flow into HTTP.
 # No extra features beyond: choose topic, optional AI tutor, generate unit, take quiz, track coins.
 
-from flask import Flask, request, jsonify, session, send_from_directory
+from flask import Flask, render_template, request, jsonify, session, send_from_directory
 from typing import Dict, Any, Optional
 import uuid
 
@@ -75,7 +75,7 @@ def _build_tutor_feedback(question_data: Dict[str, Any], user_answer: str) -> Op
 
 @app.get("/")
 def index():
-    return send_from_directory(app.static_folder, "index.html")
+    return render_template("index.html")
 
 
 @app.post("/api/start")
