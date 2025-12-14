@@ -6,8 +6,8 @@ document.addEventListener("DOMContentLoaded", () => {
     { id: "division", label: "Division", description: "Share and divide!", icon: "➗" },
     { id: "fractions", label: "Fractions", description: "Slice it up!", icon: "🍕" },
     { id: "algebra", label: "Algebra", description: "Solve for X!", icon: "🧮" },
+    { id: "triginometry", label: "Triginometry", description: "Sin,cos,tan!", icon: "🧮" },
   ];
-
 
   const welcomeScreen = document.querySelector("#welcome-screen");
   const topicsScreen = document.querySelector("#topics-screen");
@@ -37,15 +37,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderTopics() {
-    topicsGrid.innerHTML = topics.map(t => `
+    topicsGrid.innerHTML = topics
+      .map(
+        (t) => `
       <button class="topic-card" data-id="${t.id}" aria-pressed="false">
         <div class="topic-icon">${t.icon}</div>
         <h3 class="topic-title">${t.label}</h3>
         <p class="topic-desc">${t.description}</p>
       </button>
-    `).join("");
+    `
+      )
+      .join("");
 
-    topicsGrid.querySelectorAll(".topic-card").forEach(btn => {
+    topicsGrid.querySelectorAll(".topic-card").forEach((btn) => {
       btn.addEventListener("click", () => {
         selectTopic(btn.dataset.id);
       });
@@ -54,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function selectTopic(id) {
     selectedTopic = id;
-    topicsGrid.querySelectorAll(".topic-card").forEach(btn => {
+    topicsGrid.querySelectorAll(".topic-card").forEach((btn) => {
       const isSelected = btn.dataset.id === id;
       btn.setAttribute("aria-pressed", isSelected ? "true" : "false");
     });

@@ -11,7 +11,8 @@ import uuid
 from unit_generator import generate_unit
 from tutor_helper import ai_tutor_reply
 
-app = Flask(__name__, static_folder="static", static_url_path="")
+# Serve static files under /static (Flask default). Explicit to avoid 404s in templates.
+app = Flask(__name__, static_folder="static", static_url_path="/static")
 app.secret_key = "dev-secret-change-me"  # needed for session cookies
 
 # In-memory per-session state
