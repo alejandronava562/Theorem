@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     { id: "fractions", label: "Fractions", description: "Slice it up!", icon: "🍕" },
     { id: "algebra", label: "Algebra", description: "Solve for X!", icon: "🧮" },
     { id: "triginometry", label: "Triginometry", description: "Sin,cos,tan!", icon: "🧮" },
-    { id: "calculus", label: "Calculus", description: "Derivatives and More!", icon: "σ" },
+    { id: "calculus", label: "Calculus", description: "Derivatives and More!, This is the easiest subject!", icon: "σ" },
   ];
 
   const welcomeScreen = document.querySelector("#welcome-screen");
