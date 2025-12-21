@@ -21,19 +21,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const backBtn = document.querySelector("#back-btn");
   const startBtn = document.querySelector("#start-btn");
   const startStatus = document.querySelector("#start-status");
-
+  const pathScreen = document.querySelector("#path-screen");
+  const pathStatus = document.querySelector("#path-status");
   let selectedTopic = null;
 
   function setStep(step) {
     if (step === "welcome") {
       welcomeScreen.classList.add("active");
       topicsScreen.classList.remove("active");
+      pathScreen.classList.remove("active");
       usernameInput.focus();
-    } else {
-      welcomeScreen.classList.remove("active");
+    } else if (step === "topics"){
       topicsScreen.classList.add("active");
+      welcomeScreen.classList.remove("active");
+      pathScreen.classList.remove("active");
       const firstCard = topicsGrid.querySelector(".topic-card");
       if (firstCard) firstCard.focus();
+    } else if (step == "path") {
+      pathScreen.classList.add("active");
+      welcomeScreen.classList.remove("active");
+      topicsScreen.classList.remove("active");
     }
   }
 
@@ -102,8 +109,9 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to start");
-      startStatus.textContent = "Lesson started! (hook up next step here)";
-      // TODO: navigate to lesson/quiz UI once built
+      startStatus.textContent = "Lesson started!";
+      pathStatus.textContent = "Response from ChaGPT" + JSON.stringify(data, null, 2);
+      setStep("path")
     } catch (err) {
       startStatus.textContent = err.message;
       startBtn.disabled = false;

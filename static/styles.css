@@ -1,6 +1,6 @@
 :root {
   --bg: #0f1115;
-  --card: #171a20;
+  --card: #ffffff;
   --muted: #9ea4b0;
   --text: #f2f4f8;
   --accent: #8b5cf6;
@@ -124,6 +124,8 @@ button.ghost {
   gap: 18px;
   margin: 20px 0 24px;
 }
+
+
 
 .topic-card {
   background: #10131a;
