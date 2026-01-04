@@ -23,8 +23,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const startStatus = document.querySelector("#start-status");
   const pathScreen = document.querySelector("#path-screen");
   const pathStatus = document.querySelector("#path-status");
-  let selectedTopic = null;
+  const pathSubject = document.querySelector("#path-subject")
+  const pathDescription = document.querySelector("#path-desc");
+  const pathTimeline = document.querySelector("#path-timeline");
+  
 
+  let selectedTopic = null;
+  
   function setStep(step) {
     if (step === "welcome") {
       welcomeScreen.classList.add("active");
@@ -109,7 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to start");
-      pathStatus.textContent = "Response from ChaGPT" + JSON.stringify(data.pathway, null, 2);
+      renderLearningPath(data.pathway)
       setStep("path")
     } catch (err) {
       startStatus.textContent = err.message;
@@ -119,4 +124,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderTopics();
   usernameInput.focus();
+  const timelineLineMarkup = '<div class="timeline-line"></div>';
+
+  function buildLevelCard(level) {
+    const card = document.createElement("section");
+    card.className = "level-card";
+    card.innerHTML = `
+      <div class="level-badge">🏆</div>
+      <div class="level-body">
+        <div class="level-title">Level ${level.level} <span>${level.title}</span></div>
+        <p class="level-subtitle">${level.goal}</p>
+      </div>
+    `;
+    return card;
+  }
+
+  function renderLearningPath(pathway) {
+    const lp = pathway?.learning_path || pathway?.learningPath || pathway;
+    if (!lp) return;
+
+    pathSubject.textContent = lp.subject || "";
+    pathDescription.textContent = lp.description || "";
+
+    pathTimeline.innerHTML = timelineLineMarkup;
+    (lp.levels || []).forEach((level) => {
+      pathTimeline.appendChild(buildLevelCard(level));
+    });
+  }
 });
+

@@ -11,6 +11,7 @@ import uuid
 from unit_generator import generate_unit
 from tutor_helper import ai_tutor_reply
 from path_generator import generate_pathway
+from session_state import default_state, hydrate
 
 # Serve static files under /static (Flask default). Explicit to avoid 404s in templates.
 app = Flask(__name__, static_folder="static", static_url_path="/static")
@@ -84,11 +85,19 @@ def index():
 def start():
     data = request.get_json(force=True) or {}
     topic = (data.get("topic") or "").strip()
+    username = (data.get("username") or "").strip() or None
     use_tutor = bool(data.get("use_tutor", False))
     if not topic:
         return jsonify({"error": "Topic is required"}), 400
-
     pathway = generate_pathway(topic=topic)
+    state = _get_state()
+    state.clear()
+    state.update(default_state())
+    state["user"] = username
+    state["topic"] = topic
+    state["user_tutor"] = use_tutor
+    state["learning_path"] = pathway.get("learning_path", pathway)
+
     return jsonify({
         "topic": topic,
         "use_tutor": use_tutor,
@@ -116,6 +125,12 @@ def get_state():
         "done": q is None,
     })
 
+@app.get("/api/pathway")
+def get_pathway():
+    state = _get_state()
+    if not state.get("learning_path"):
+        return jsonify({"error": "No learning path generated yet"}), 404
+    return jsonify({"learning_path": state["learning_path"]})
 
 @app.post("/api/answer")
 def answer():
