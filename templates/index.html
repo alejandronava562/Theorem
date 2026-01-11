@@ -10,40 +10,72 @@
 <body>
   <main class="page">
     <section id="welcome-screen" class="card screen active">
-      <div class="icon">🧮</div>
-      <h1>Hey there! 👋</h1>
+      <div class="icon">📚</div>
+      <h1>Hey there!</h1>
       <p class="subhead">Welcome to Theorum! Let's get started on your learning journey.</p>
       <form id="welcome-form">
         <label for="username">What's your name?</label>
-        <input id="username" name="username" type="text" placeholder="Enter your awesome name here! ✨" required />
+        <input id="username" name="username" type="text" placeholder="Enter your name" required />
         <p id="username-error" class="error" aria-live="polite"></p>
-        <button id="continue-btn" type="submit" disabled>Continue to Topics! 🚀</button>
+        <button id="continue-btn" type="submit" disabled>Continue to Topics</button>
       </form>
     </section>
 
     <section id="topics-screen" class="card screen">
-      <h1>Awesome, <span id="greet-name"></span>! 🎉</h1>
+      <h1>Awesome, <span id="greet-name"></span>!</h1>
       <p class="subhead">Pick something you'd like to start with!</p>
       <div id="topics-grid" class="topics-grid"></div>
       <div class="actions">
-        <button id="back-btn" class="ghost">← Back</button>
-        <button id="start-btn" class="primary" disabled>Start Learning! 🎯</button>
+        <button id="back-btn" class="ghost">Back</button>
+        <button id="start-btn" class="primary" disabled>Start Learning</button>
       </div>
       <p id="start-status" class="status" aria-live="polite"></p>
     </section>
 
-    <section id="path-screen" class = "card screen">
+    <section id="path-screen" class="card screen">
       <header class="path-header">
+        <div class="path-topbar">
+          <button id="path-back-btn" class="ghost">Change Topic</button>
+          <div class="coin-pill"><span id="coin-count">0</span> coins</div>
+        </div>
         <div class="path-info">
-          <div id="path-subject" class="path-subject"></div>  
-          <div id="path-desc" class="path-desc"></div> 
+          <div id="path-subject" class="path-subject"></div>
+          <div id="path-desc" class="path-desc"></div>
         </div>
       </header>
-      <main id="path-timeline" class = "path-timeline">
+      <div id="path-timeline" class="path-timeline">
         <div class="timeline-line"></div>
-        <!--- level + unit nodes injected by JS-->
-      </main>
-      <p id="path-status" class = "status"></p>
+      </div>
+      <p id="path-status" class="status"></p>
+    </section>
+
+    <section id="lesson-screen" class="card screen">
+      <header class="unit-header">
+        <button id="lesson-back-btn" class="ghost">Back to Path</button>
+        <div class="coin-pill"><span id="lesson-coin-count">0</span> coins</div>
+      </header>
+      <h1 id="unit-title" class="unit-title"></h1>
+      <div id="unit-skills" class="unit-skills"></div>
+      <div id="unit-lessons" class="unit-lessons"></div>
+      <div class="actions single">
+        <button id="start-quiz-btn" class="primary">Start Quiz</button>
+      </div>
+      <p id="lesson-status" class="status" aria-live="polite"></p>
+    </section>
+
+    <section id="quiz-screen" class="card screen">
+      <header class="unit-header">
+        <button id="quiz-back-btn" class="ghost">Back to Path</button>
+        <div class="coin-pill"><span id="quiz-coin-count">0</span> coins</div>
+      </header>
+      <h1 class="unit-title">Quiz</h1>
+      <div id="quiz-question" class="quiz-question"></div>
+      <div id="quiz-options" class="quiz-options"></div>
+      <div id="quiz-feedback" class="quiz-feedback" aria-live="polite"></div>
+      <div class="actions single">
+        <button id="quiz-next-btn" class="primary" disabled>Next</button>
+      </div>
+      <p id="quiz-status" class="status" aria-live="polite"></p>
     </section>
   </main>
 </body>

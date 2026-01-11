@@ -9,7 +9,7 @@ def build_tutor_callback() -> TutorCallback:
         options = question_data.get("OPTIONS", {})
         option_lines = "\n".join(f'{key}{text}' for key,text in options.items())
         prompt = (
-            f"Question: {question_data.get("QUESTION", 'Unkown')}\n"
+            f"Question: {question_data.get('QUESTION', 'Unknown')}\n"
             f"Options:\n{option_lines}"
         )
         correct_letter = question_data.get("CORRECT_ANSWER")

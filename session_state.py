@@ -7,7 +7,11 @@ def default_state() -> Dict[str, Any]:
         "use_tutor": False,
         "learning_path": None,
         "coins": 0,
-        "progress" : {},
+        "progress": {},
+        "unit_order": [],
+        "unit_meta": {},
+        "active_unit_id": None,
+        "lessons": [],
         "questions": [],
         "q_index" : 0,
     }

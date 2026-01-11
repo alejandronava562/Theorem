@@ -384,3 +384,117 @@ button.ghost {
   #path-screen .level-card{ padding: 14px 14px; }
   #path-screen .unit-icon{ width: 70px; height: 70px; }
 }
+
+/* ===== Unit / Quiz screens ===== */
+
+.unit-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.coin-pill{
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 13px;
+  line-height: 1;
+}
+
+#path-screen .coin-pill{
+  background: #ffffff;
+  border: 1px solid rgba(15,23,42,.1);
+  color: #0f172a;
+}
+
+#path-screen .path-topbar{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.unit-title{
+  margin: 0 0 10px;
+  font-size: 22px;
+}
+
+.unit-skills{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.skill-pill{
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.unit-lessons{
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.lesson-text{
+  margin: 0;
+  color: var(--text);
+  line-height: 1.5;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  padding: 14px 14px;
+  border-radius: 12px;
+}
+
+.actions.single{
+  grid-template-columns: 1fr;
+}
+
+.quiz-question{
+  font-weight: 900;
+  font-size: 16px;
+  margin: 12px 0 12px;
+}
+
+.quiz-options{
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.option-btn{
+  background: #10131a;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: left;
+  padding: 12px 14px;
+}
+
+.option-btn:hover:not(:disabled){
+  border-color: var(--accent);
+  box-shadow: 0 10px 24px rgba(139, 92, 246, 0.18);
+}
+
+.quiz-feedback{
+  white-space: pre-wrap;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  min-height: 40px;
+  color: var(--text);
+  margin-bottom: 12px;
+}

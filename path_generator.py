@@ -40,7 +40,7 @@ Rules:
 def _client():
     return OpenAI(api_key=get_openai_api_key())
 
-def generate_pathway(topic: str, model: str = "gpt-4o") -> Dict[str, Any]:
+def generate_pathway(topic: str, model: str = "gpt-4o-mini") -> Dict[str, Any]:
     client = _client()
     response = client.chat.completions.create(
         model=model,
