@@ -10,6 +10,8 @@ import os
 import json
 import uuid
 
+from dotenv import load_dotenv
+
 from unit_generator import generate_unit
 from tutor_helper import ai_tutor_reply
 from path_generator import generate_pathway
@@ -21,18 +23,62 @@ import firebase_admin
 from firestore_db import *
 from firebase_admin import credentials, auth
 
-# Initialize admin sk
-if not firebase_admin._apps:
-    # check if running on render
-    firebase_creds_json = os.getenv('FIREBASE_SERVICE_ACCOUNT_JSON')
-    if firebase_creds_json:
-        cred = credentials.Certificate(json.loads(firebase_creds_json))
-    else:
-        # Local
-        cred_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS', 'service-account.json')
-        cred = credentials.Certificate(cred_path)
+# Load .env if present (local/dev)
+load_dotenv()
 
-init_firestore()
+def _resolve_firebase_credentials():
+    firebase_creds_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
+    if firebase_creds_json:
+        try:
+            return "info", json.loads(firebase_creds_json)
+        except json.JSONDecodeError as exc:
+            print(f"Warning: FIREBASE_SERVICE_ACCOUNT_JSON is invalid JSON: {exc}")
+
+    cred_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+    if cred_path:
+        expanded = os.path.expanduser(cred_path)
+        if os.path.exists(expanded):
+            return "path", expanded
+
+    local_path = os.path.join(os.path.dirname(__file__), "service-account.json")
+    if os.path.exists(local_path):
+        return "path", local_path
+
+    return None, None
+
+
+cred_type, cred_value = _resolve_firebase_credentials()
+
+if not firebase_admin._apps:
+    try:
+        if cred_type in ("info", "path"):
+            firebase_admin.initialize_app(credentials.Certificate(cred_value))
+        else:
+            firebase_admin.initialize_app()
+    except Exception as exc:
+        print(f"Warning: Firebase Admin not initialized: {exc}")
+
+try:
+    if cred_type == "info":
+        init_firestore(credentials_info=cred_value)
+    elif cred_type == "path":
+        init_firestore(credentials_path=cred_value)
+    else:
+        init_firestore()
+except Exception as exc:
+    print(f"Warning: Firestore not initialized: {exc}")
+
+
+def _validate_firestore_connection() -> None:
+    try:
+        client = get_firestore_client()
+        next(client.collections(), None)
+        print("Firestore connection: OK")
+    except Exception as exc:
+        print(f"Warning: Firestore connectivity check failed: {exc}")
+
+
+_validate_firestore_connection()
 
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 app.secret_key = "dev-secret-change-me"  # needed for session cookies

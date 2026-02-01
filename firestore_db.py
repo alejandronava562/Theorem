@@ -19,10 +19,20 @@ from typing import Optional, Dict, Any
 _db = None
 
 
-def init_firestore():
-    """Initialize Firestore client (uses GOOGLE_APPLICATION_CREDENTIALS env var)."""
+def init_firestore(
+    credentials_info: Optional[Dict[str, Any]] = None,
+    credentials_path: Optional[str] = None,
+) -> Optional[firestore.Client]:
+    """Initialize Firestore client with optional service account credentials."""
     global _db
-    if _db is None:
+    if _db is not None:
+        return _db
+
+    if credentials_info:
+        _db = firestore.Client.from_service_account_info(credentials_info)
+    elif credentials_path:
+        _db = firestore.Client.from_service_account_json(credentials_path)
+    else:
         _db = firestore.Client()
     return _db
 
