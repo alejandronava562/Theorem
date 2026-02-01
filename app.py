@@ -210,6 +210,34 @@ def get_state():
         "done": q is None,
     })
 
+@app.post("/api/auth")
+def auth_login():
+    data = request.get_json(force=True) or {}
+    id_token = data.get("idToken")
+    if not id_token:
+        return jsonify({"error": "Missing idToken"}), 400
+
+    try:
+        decoded = auth.verify_id_token(id_token)
+        uid = decoded.get("uid")
+        email = decoded.get("email")
+        name = decoded.get("name") or decoded.get("displayName") or ""
+        picture = decoded.get("picture")
+
+        # Save or update user in Firestore
+        try:
+            upsert_user(uid, email, name, picture)
+        except Exception:
+            pass  # don't block sign-in if Firestore write fails
+
+        session["uid"] = uid
+        session["email"] = email
+        session["name"] = name
+        return jsonify({"uid": uid, "email": email, "name": name})
+    except Exception as exc:
+        return jsonify({"error": f"Invalid token: {exc}"}), 401
+
+
 @app.get("/api/pathway")
 def get_pathway():
     state = _get_state()

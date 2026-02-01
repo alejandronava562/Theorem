@@ -1,13 +1,128 @@
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyClfLemHP4FoD3xwmEFCOhJ5Gh8AetTMHo",
+  authDomain: "theorem-8a4e5.firebaseapp.com",
+  projectId: "theorem-8a4e5",
+  storageBucket: "theorem-8a4e5.firebasestorage.app",
+  messagingSenderId: "508241176996",
+  appId: "1:508241176996:web:f43f6e2325e68aededf931",
+};
+
+// Initialize Firebase (script-tag / compat SDK)
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const provider = new firebase.auth.GoogleAuthProvider();
+
 document.addEventListener("DOMContentLoaded", () => {
+  const googleSignInButton = document.querySelector("#google-signin-btn");
+  const signOutButton = document.querySelector("#signout-btn");
+  const authStatus = document.querySelector("#auth-status");
+  const userInfo = document.querySelector("#user-info");
+  const userName = document.querySelector("#user-name");
+
+  // AUTH HELPER FUNCTIONS
+  function setAuthUI(user) {
+    if (!googleSignInButton || !userInfo || !userName) return;
+    if (user) {
+      googleSignInButton.classList.add("hidden");
+      userInfo.classList.remove("hidden");
+      userName.textContent = user.displayName || user.email || "Signed In";
+    } else {
+      googleSignInButton.classList.remove("hidden");
+      userInfo.classList.add("hidden");
+      userName.textContent = "";
+    }
+  }
+
+  async function sendIdTokenToBackend(user) {
+    const idToken = await user.getIdToken();
+    const res = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Auth failed");
+    return data;
+  }
+
+  // AUTH EVENT HANDLERS
+  if (googleSignInButton) {
+    googleSignInButton.addEventListener("click", async () => {
+      if (authStatus) authStatus.textContent = "Signing in...";
+      try {
+        const result = await auth.signInWithPopup(provider);
+        await sendIdTokenToBackend(result.user);
+        setAuthUI(result.user);
+        if (authStatus) authStatus.textContent = "Signed in!";
+      } catch (err) {
+        if (authStatus)
+          authStatus.textContent = err.message || "Sign in failed.";
+      }
+    });
+  }
+
+  if (signOutButton) {
+    signOutButton.addEventListener("click", async () => {
+      if (authStatus) authStatus.textContent = "Signing out...";
+      try {
+        await auth.signOut();
+        await fetch("/api/logout", { method: "POST" });
+        setAuthUI(null);
+        if (authStatus) authStatus.textContent = "Signed out.";
+      } catch (err) {
+        if (authStatus)
+          authStatus.textContent = err.message || "Sign out failed.";
+      }
+    });
+  }
+
+  auth.onAuthStateChanged((user) => setAuthUI(user));
+
   const topics = [
-    { id: "addition", label: "Addition", description: "Let’s add some fun!", icon: "➕" },
-    { id: "subtraction", label: "Subtraction", description: "Take it away!", icon: "➖" },
-    { id: "multiplication", label: "Multiplication", description: "Multiply the magic!", icon: "✖️" },
-    { id: "division", label: "Division", description: "Share and divide!", icon: "➗" },
-    { id: "fractions", label: "Fractions", description: "Slice it up!", icon: "🥧" },
+    {
+      id: "addition",
+      label: "Addition",
+      description: "Let’s add some fun!",
+      icon: "➕",
+    },
+    {
+      id: "subtraction",
+      label: "Subtraction",
+      description: "Take it away!",
+      icon: "➖",
+    },
+    {
+      id: "multiplication",
+      label: "Multiplication",
+      description: "Multiply the magic!",
+      icon: "✖️",
+    },
+    {
+      id: "division",
+      label: "Division",
+      description: "Share and divide!",
+      icon: "➗",
+    },
+    {
+      id: "fractions",
+      label: "Fractions",
+      description: "Slice it up!",
+      icon: "🥧",
+    },
     { id: "algebra", label: "Algebra", description: "Solve for X!", icon: "𝑥" },
-    { id: "trigonometry", label: "Trigonometry", description: "Sin, cos, tan!", icon: "📐" },
-    { id: "calculus", label: "Calculus", description: "Derivatives and more!", icon: "∫" },
+    {
+      id: "trigonometry",
+      label: "Trigonometry",
+      description: "Sin, cos, tan!",
+      icon: "📐",
+    },
+    {
+      id: "calculus",
+      label: "Calculus",
+      description: "Derivatives and more!",
+      icon: "∫",
+    },
   ];
 
   const welcomeScreen = document.querySelector("#welcome-screen");
@@ -159,7 +274,10 @@ document.addEventListener("DOMContentLoaded", () => {
       feedbackText: unitSession.feedbackText || "",
       awaitingNext: Boolean(unitSession.awaitingNext),
     };
-    safeLocalStorageSet(getQuizStorageKey(unitSession.unitId), JSON.stringify(payload));
+    safeLocalStorageSet(
+      getQuizStorageKey(unitSession.unitId),
+      JSON.stringify(payload),
+    );
   }
 
   function setUnitLoading(isLoading) {
@@ -169,8 +287,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function setStep(step) {
-    [welcomeScreen, topicsScreen, pathScreen, lessonScreen, quizScreen].forEach((el) =>
-      el.classList.remove("active"),
+    [welcomeScreen, topicsScreen, pathScreen, lessonScreen, quizScreen].forEach(
+      (el) => el.classList.remove("active"),
     );
     if (step === "welcome") welcomeScreen.classList.add("active");
     if (step === "topics") topicsScreen.classList.add("active");
@@ -272,7 +390,8 @@ document.addEventListener("DOMContentLoaded", () => {
     startStatus.textContent = "Generating your learning path…";
     pathStatus.textContent = "";
 
-    const topic = topics.find((t) => t.id === selectedTopicId)?.label || selectedTopicId;
+    const topic =
+      topics.find((t) => t.id === selectedTopicId)?.label || selectedTopicId;
     try {
       const res = await fetch("/api/start", {
         method: "POST",
@@ -290,7 +409,11 @@ document.addEventListener("DOMContentLoaded", () => {
       current.activeUnitId = null;
       setCoins(0);
 
-      renderLearningPath(current.learningPath, current.progress, current.unitMeta);
+      renderLearningPath(
+        current.learningPath,
+        current.progress,
+        current.unitMeta,
+      );
       setStep("path");
     } catch (err) {
       startStatus.textContent = err.message;
@@ -303,7 +426,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const saved = loadQuizProgress(unitId);
     if (saved) {
       unitSession.unitId = saved.unitId;
-      unitSession.unitMeta = saved.unitMeta || current.unitMeta?.[unitId] || null;
+      unitSession.unitMeta =
+        saved.unitMeta || current.unitMeta?.[unitId] || null;
       unitSession.lessons = saved.lessons || [];
       unitSession.currentQuestion = saved.currentQuestion || null;
       unitSession.pendingNextQuestion = saved.pendingNextQuestion || null;
@@ -356,7 +480,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderUnitLesson(unitMeta, lessons) {
-    unitTitleEl.textContent = unitMeta?.title ? `Unit: ${unitMeta.title}` : "Unit";
+    unitTitleEl.textContent = unitMeta?.title
+      ? `Unit: ${unitMeta.title}`
+      : "Unit";
     unitSkillsEl.innerHTML = "";
     (unitMeta?.skills || []).forEach((skill) => {
       const pill = document.createElement("span");
@@ -430,8 +556,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const correctness = data.correct ? "Correct! +10" : "Not quite. -5";
       let feedbackText = correctness;
-      if (data.feedback?.message) feedbackText += `\n\n${data.feedback.message}`;
-      if (data.feedback?.explanation) feedbackText += `\n${data.feedback.explanation}`;
+      if (data.feedback?.message)
+        feedbackText += `\n\n${data.feedback.message}`;
+      if (data.feedback?.explanation)
+        feedbackText += `\n${data.feedback.explanation}`;
       quizFeedbackEl.textContent = feedbackText;
       unitSession.feedbackText = feedbackText;
 
@@ -461,7 +589,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function goToNextFromQuiz() {
     if (unitSession.done) {
-      renderLearningPath(current.learningPath, current.progress, current.unitMeta);
+      renderLearningPath(
+        current.learningPath,
+        current.progress,
+        current.unitMeta,
+      );
       setStep("path");
       return;
     }
@@ -503,13 +635,21 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   lessonBackBtn.addEventListener("click", () => {
-    renderLearningPath(current.learningPath, current.progress, current.unitMeta);
+    renderLearningPath(
+      current.learningPath,
+      current.progress,
+      current.unitMeta,
+    );
     setStep("path");
   });
   quizBackBtn.addEventListener("click", () => {
     syncQuizStateFromPending();
     persistQuizProgress();
-    renderLearningPath(current.learningPath, current.progress, current.unitMeta);
+    renderLearningPath(
+      current.learningPath,
+      current.progress,
+      current.unitMeta,
+    );
     setStep("path");
   });
 

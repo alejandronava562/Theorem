@@ -107,7 +107,7 @@ button:hover:not(:disabled) { transform: translateY(-1px); }
 button.primary {
   background: var(--accent);
   color: #0b0c10;
-  box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 10px 30px   rgba(139, 92, 246, 0.4);
 }
 
 button.primary:hover:not(:disabled) { background: var(--accent-strong); }

@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Theorem</title>
+  <!-- Firebase SDKs (compat for script-tag usage) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <link rel="stylesheet" href="/static/styles.css" />
   <script defer src="/static/app.js"></script>
 </head>
@@ -17,6 +20,17 @@
         <label for="username">What's your name?</label>
         <input id="username" name="username" type="text" placeholder="Enter your name" required />
         <p id="username-error" class="error" aria-live="polite"></p>
+        <!-- GOOGLE SIGN IN BUTTON GOES HERE ! -->
+        <section id="auth-bar" class="card screen active">
+          <div class="auth-row">
+            <button id="google-signin-btn" class="primary" type="button">Sign in with Google</button>
+             <div id="user-info" class="user-info hidden">
+              <span id="user-name"></span>
+              <button id="signout-btn" class="ghost" type="button">Sign Out</button>
+             </div>
+          </div>
+          <p id="auth-status" class="status" aria-live="polite"></p>
+         </section>
         <button id="continue-btn" type="submit" disabled>Continue to Topics</button>
       </form>
     </section>
