@@ -40,6 +40,8 @@ body {
 .screen { display: none; }
 .screen.active { display: block; }
 
+.hidden { display: none !important; }
+
 .icon {
   width: 52px;
   height: 52px;
@@ -223,9 +225,95 @@ button.ghost {
   100%{ transform: translateX(-60%); }
 }
 
+/* Auth section styling */
+#auth-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0 0;
+}
+
+#google-signin-btn {
+  width: 100%;
+}
+
+.user-info-card {
+  background: rgba(139, 92, 246, 0.08);
+  border: 1.5px solid var(--accent);
+  border-radius: 12px;
+  padding: 16px;
+  transition: all 150ms ease;
+}
+
+.user-info-card.hidden {
+  display: none;
+}
+
+.user-info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.user-info-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.user-check {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #0b0c10;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-label {
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.user-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.user-info-card #signout-btn {
+  padding: 8px 12px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
 @media (max-width: 640px) {
   .card { padding: 24px; }
   .actions { grid-template-columns: 1fr; }
+
+  .user-info-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .user-info-card #signout-btn {
+    width: 100%;
+  }
 }
 
 /* ===== Duolingo-style learning path (scoped to #path-screen) ===== */

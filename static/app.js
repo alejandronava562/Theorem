@@ -26,11 +26,28 @@ document.addEventListener("DOMContentLoaded", () => {
     if (user) {
       googleSignInButton.classList.add("hidden");
       userInfo.classList.remove("hidden");
-      userName.textContent = user.displayName || user.email || "Signed In";
+      const displayName = user.displayName || user.email || "Signed In";
+      userName.textContent = displayName;
+      // Auto-fill username input
+      if (usernameInput) {
+        usernameInput.value = displayName;
+        usernameInput.dispatchEvent(new Event("input"));
+      }
     } else {
       googleSignInButton.classList.remove("hidden");
       userInfo.classList.add("hidden");
       userName.textContent = "";
+    }
+  }
+
+  async function checkBackendAuth() {
+    try {
+      const res = await fetch("/api/check-auth");
+      const data = await res.json();
+      return data.authenticated ? data : null;
+    } catch (err) {
+      console.error("Failed to check auth:", err);
+      return null;
     }
   }
 
@@ -54,6 +71,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const result = await auth.signInWithPopup(provider);
         await sendIdTokenToBackend(result.user);
         setAuthUI(result.user);
+        // Ensure button is enabled after sign-in
+        if (usernameInput && continueBtn) {
+          const val = usernameInput.value.trim();
+          continueBtn.disabled = val.length === 0;
+        }
         if (authStatus) authStatus.textContent = "Signed in!";
       } catch (err) {
         if (authStatus)
@@ -77,7 +99,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  auth.onAuthStateChanged((user) => setAuthUI(user));
+  auth.onAuthStateChanged(async (user) => {
+    setAuthUI(user);
+    // Also check backend session
+    if (user) {
+      const backendAuth = await checkBackendAuth();
+      if (!backendAuth) {
+        // Backend session doesn't match Firebase, re-authenticate
+        const idToken = await user.getIdToken();
+        try {
+          await fetch("/api/auth", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken }),
+          });
+        } catch (err) {
+          console.error("Failed to sync backend auth:", err);
+        }
+      }
+    }
+  });
 
   const topics = [
     {
@@ -624,6 +665,18 @@ document.addEventListener("DOMContentLoaded", () => {
     username = val;
     greetName.textContent = val;
     setStep("topics");
+  });
+
+  // Check for existing backend auth on page load
+  checkBackendAuth().then((backendAuth) => {
+    if (backendAuth && backendAuth.name && usernameInput) {
+      usernameInput.value = backendAuth.name;
+      usernameInput.dispatchEvent(new Event("input"));
+    }
+    // Trigger initial validation in case backend auth wasn't found
+    if (usernameInput) {
+      usernameInput.dispatchEvent(new Event("input"));
+    }
   });
 
   backBtn.addEventListener("click", () => setStep("welcome"));

@@ -153,6 +153,11 @@ def start():
     topic = (data.get("topic") or "").strip()
     username = (data.get("username") or "").strip() or None
     use_tutor = bool(data.get("use_tutor", False))
+
+    # Use authenticated user info if available
+    if not username:
+        username = session.get("name") or None
+
     if not topic:
         return jsonify({"error": "Topic is required"}), 400
     pathway = generate_pathway(topic=topic)
@@ -164,6 +169,7 @@ def start():
     state.clear()
     state.update(default_state())
     state["user"] = username
+    state["uid"] = session.get("uid")
     state["topic"] = topic
     state["use_tutor"] = use_tutor
     state["learning_path"] = learning_path
@@ -236,6 +242,23 @@ def auth_login():
         return jsonify({"uid": uid, "email": email, "name": name})
     except Exception as exc:
         return jsonify({"error": f"Invalid token: {exc}"}), 401
+
+
+@app.post("/api/logout")
+def auth_logout():
+    session.clear()
+    return jsonify({"status": "logged out"}), 200
+
+
+@app.get("/api/check-auth")
+def check_auth():
+    uid = session.get("uid")
+    email = session.get("email")
+    name = session.get("name")
+    if uid:
+        return jsonify({"authenticated": True, "uid": uid, "email": email, "name": name})
+    else:
+        return jsonify({"authenticated": False}), 200
 
 
 @app.get("/api/pathway")
