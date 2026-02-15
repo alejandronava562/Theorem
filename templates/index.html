@@ -8,6 +8,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <link rel="stylesheet" href="/static/styles.css" />
+  <script defer src="/static/progress-tracker.js"></script>
   <script defer src="/static/app.js"></script>
 </head>
 <body>
@@ -40,6 +41,9 @@
 
         <button id="continue-btn" type="submit" disabled>Continue to Topics</button>
       </form>
+      <div id="delete-data-section" class="delete-data-section hidden">
+        <button id="delete-data-btn" class="danger-link" type="button">Delete all saved progress</button>
+      </div>
     </section>
 
     <section id="topics-screen" class="card screen">

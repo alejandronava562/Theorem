@@ -56,12 +56,6 @@ def upsert_user(uid: str, email: str, display_name: str, photo_url: Optional[str
 
     Returns:
         Dictionary with user data
-
-    Firestore operation needed:
-    - Reference: users/{uid}
-    - On first creation: set created_at to current timestamp
-    - Always update: email, display_name, photo_url, last_login to current timestamp
-    - Use set() with merge=True to update without overwriting created_at
     """
 
     db = get_firestore_client()
@@ -72,19 +66,21 @@ def upsert_user(uid: str, email: str, display_name: str, photo_url: Optional[str
     user_data = {
         'email': email,
         'display_name': display_name,
-        'photo_url' : photo_url,
+        'photo_url': photo_url,
         'last_login': firestore.SERVER_TIMESTAMP
     }
 
     # new user
     if not user_doc.exists:
         user_data['created_at'] = firestore.SERVER_TIMESTAMP
-    
+
+    user_ref.set(user_data, merge=True)
+
     return {
         'uid': uid,
         'email': email,
         'display_name': display_name,
-        'photo_url':photo_url
+        'photo_url': photo_url
     }
 
 
@@ -157,3 +153,129 @@ def get_progress(uid: str, topic: str) -> Optional[Dict[str, Any]]:
     if doc.exists:
         return doc.to_dict()
     return None
+
+
+def save_learning_path(uid: str, topic: str, learning_path: Dict[str, Any], unit_meta: Dict[str, Any], unit_order: list) -> None:
+    """
+    Save the AI-generated learning path outline for a topic.
+
+    Args:
+        uid: Firebase user ID
+        topic: Topic name
+        learning_path: The complete learning path structure from AI
+        unit_meta: Unit metadata (titles, skills, etc.)
+        unit_order: Order of unit IDs
+    """
+    db = get_firestore_client()
+    path_ref = db.collection('users').document(uid).collection('learning_paths').document(topic)
+
+    path_ref.set({
+        'learning_path': learning_path,
+        'unit_meta': unit_meta,
+        'unit_order': unit_order,
+        'created_at': firestore.SERVER_TIMESTAMP,
+        'updated_at': firestore.SERVER_TIMESTAMP
+    }, merge=True)
+
+
+def get_learning_path(uid: str, topic: str) -> Optional[Dict[str, Any]]:
+    """
+    Retrieve saved learning path for a topic.
+
+    Args:
+        uid: Firebase user ID
+        topic: Topic name
+
+    Returns:
+        Dictionary with learning_path, unit_meta, unit_order, or None if not found
+    """
+    db = get_firestore_client()
+    path_ref = db.collection('users').document(uid).collection('learning_paths').document(topic)
+    doc = path_ref.get()
+
+    if doc.exists:
+        return doc.to_dict()
+    return None
+
+
+def save_session_state(uid: str, topic: str, session_data: Dict[str, Any]) -> None:
+    """
+    Save complete session state for a topic (progress, coins, active unit, lessons, etc.).
+
+    Args:
+        uid: Firebase user ID
+        topic: Topic name
+        session_data: Complete session state dictionary
+    """
+    db = get_firestore_client()
+    session_ref = db.collection('users').document(uid).collection('sessions').document(topic)
+
+    session_ref.set({
+        'progress': session_data.get('progress', {}),
+        'coins': session_data.get('coins', 0),
+        'active_unit_id': session_data.get('active_unit_id'),
+        'lessons': session_data.get('lessons', []),
+        'questions': session_data.get('questions', []),
+        'q_index': session_data.get('q_index', 0),
+        'updated_at': firestore.SERVER_TIMESTAMP
+    }, merge=True)
+
+
+def get_session_state(uid: str, topic: str) -> Optional[Dict[str, Any]]:
+    """
+    Retrieve saved session state for a topic.
+
+    Args:
+        uid: Firebase user ID
+        topic: Topic name
+
+    Returns:
+        Dictionary with session data, or None if not found
+    """
+    db = get_firestore_client()
+    session_ref = db.collection('users').document(uid).collection('sessions').document(topic)
+    doc = session_ref.get()
+
+    if doc.exists:
+        return doc.to_dict()
+    return None
+
+
+def delete_user_data(uid: str) -> Dict[str, int]:
+    """
+    Delete all saved data for a user (learning paths, progress, sessions).
+
+    Args:
+        uid: Firebase user ID
+
+    Returns:
+        Dictionary with counts of deleted documents per subcollection
+    """
+    db = get_firestore_client()
+    user_ref = db.collection('users').document(uid)
+    deleted = {}
+
+    for subcol_name in ('learning_paths', 'progress', 'sessions'):
+        count = 0
+        docs = user_ref.collection(subcol_name).stream()
+        for doc in docs:
+            doc.reference.delete()
+            count += 1
+        deleted[subcol_name] = count
+
+    return deleted
+
+
+def get_all_topics_for_user(uid: str) -> list:
+    """
+    Get list of all topics the user has started.
+
+    Args:
+        uid: Firebase user ID
+
+    Returns:
+        List of topic names
+    """
+    db = get_firestore_client()
+    learning_paths = db.collection('users').document(uid).collection('learning_paths').stream()
+    return [doc.id for doc in learning_paths]

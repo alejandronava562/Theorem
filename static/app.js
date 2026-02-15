@@ -19,6 +19,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const authStatus = document.querySelector("#auth-status");
   const userInfo = document.querySelector("#user-info");
   const userName = document.querySelector("#user-name");
+  const deleteDataSection = document.querySelector("#delete-data-section");
+  const deleteDataBtn = document.querySelector("#delete-data-btn");
 
   // AUTH HELPER FUNCTIONS
   function setAuthUI(user) {
@@ -26,6 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (user) {
       googleSignInButton.classList.add("hidden");
       userInfo.classList.remove("hidden");
+      if (deleteDataSection) deleteDataSection.classList.remove("hidden");
       const displayName = user.displayName || user.email || "Signed In";
       userName.textContent = displayName;
       // Auto-fill username input
@@ -36,6 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       googleSignInButton.classList.remove("hidden");
       userInfo.classList.add("hidden");
+      if (deleteDataSection) deleteDataSection.classList.add("hidden");
       userName.textContent = "";
     }
   }
@@ -69,7 +73,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (authStatus) authStatus.textContent = "Signing in...";
       try {
         const result = await auth.signInWithPopup(provider);
-        await sendIdTokenToBackend(result.user);
+        const authData = await sendIdTokenToBackend(result.user);
+        current.uid = authData.uid;
         setAuthUI(result.user);
         // Ensure button is enabled after sign-in
         if (usernameInput && continueBtn) {
@@ -90,6 +95,8 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         await auth.signOut();
         await fetch("/api/logout", { method: "POST" });
+        ProgressTracker.cleanup();
+        current.uid = null;
         setAuthUI(null);
         if (authStatus) authStatus.textContent = "Signed out.";
       } catch (err) {
@@ -99,26 +106,63 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  if (deleteDataBtn) {
+    deleteDataBtn.addEventListener("click", async () => {
+      if (!confirm("Are you sure you want to delete all saved progress? This cannot be undone.")) return;
+      deleteDataBtn.disabled = true;
+      deleteDataBtn.textContent = "Deleting...";
+      try {
+        const res = await fetch("/api/delete-data", { method: "DELETE" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to delete data");
+        // Clear localStorage quiz data
+        try {
+          const keys = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(QUIZ_STORAGE_PREFIX)) keys.push(key);
+          }
+          keys.forEach((k) => localStorage.removeItem(k));
+        } catch (e) { /* ignore */ }
+        ProgressTracker.cleanup();
+        if (authStatus) authStatus.textContent = "All saved data deleted.";
+      } catch (err) {
+        if (authStatus) authStatus.textContent = err.message || "Delete failed.";
+      } finally {
+        deleteDataBtn.disabled = false;
+        deleteDataBtn.textContent = "Delete all saved progress";
+      }
+    });
+  }
+
   auth.onAuthStateChanged(async (user) => {
     setAuthUI(user);
-    // Also check backend session
     if (user) {
       const backendAuth = await checkBackendAuth();
-      if (!backendAuth) {
+      if (backendAuth) {
+        current.uid = backendAuth.uid;
+      } else {
         // Backend session doesn't match Firebase, re-authenticate
         const idToken = await user.getIdToken();
         try {
-          await fetch("/api/auth", {
+          const res = await fetch("/api/auth", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ idToken }),
           });
+          const data = await res.json();
+          if (res.ok) current.uid = data.uid;
         } catch (err) {
           console.error("Failed to sync backend auth:", err);
         }
       }
+    } else {
+      current.uid = null;
     }
   });
+
+  // Initialize progress tracking
+  ProgressTracker.init();
 
   const topics = [
     {
@@ -214,6 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let username = "";
   let selectedTopicId = null;
   let current = {
+    uid: null,
     topic: null,
     learningPath: null,
     progress: {},
@@ -314,6 +359,10 @@ document.addEventListener("DOMContentLoaded", () => {
       done: unitSession.done,
       feedbackText: unitSession.feedbackText || "",
       awaitingNext: Boolean(unitSession.awaitingNext),
+      // Store full quiz state for backend resume
+      allQuestions: unitSession.allQuestions || [],
+      qIndex: unitSession.qIndex || 0,
+      coins: current.coins || 0,
     };
     safeLocalStorageSet(
       getQuizStorageKey(unitSession.unitId),
@@ -448,7 +497,7 @@ document.addEventListener("DOMContentLoaded", () => {
       current.unitOrder = data.unit_order || [];
       current.topic = topic;
       current.activeUnitId = null;
-      setCoins(0);
+      setCoins(data.coins || 0);
 
       renderLearningPath(
         current.learningPath,
@@ -456,6 +505,16 @@ document.addEventListener("DOMContentLoaded", () => {
         current.unitMeta,
       );
       setStep("path");
+
+      // Save progress to Firestore
+      if (current.uid) {
+        ProgressTracker.saveProgress({
+          topic: topic,
+          progress: current.progress,
+          coins: current.coins,
+          activeUnitId: current.activeUnitId,
+        });
+      }
     } catch (err) {
       startStatus.textContent = err.message;
       startBtn.disabled = false;
@@ -465,7 +524,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function startUnit(unitId) {
     if (isUnitLoading) return;
     const saved = loadQuizProgress(unitId);
-    if (saved) {
+    if (saved && saved.allQuestions && saved.allQuestions.length > 0) {
       unitSession.unitId = saved.unitId;
       unitSession.unitMeta =
         saved.unitMeta || current.unitMeta?.[unitId] || null;
@@ -475,11 +534,35 @@ document.addEventListener("DOMContentLoaded", () => {
       unitSession.done = Boolean(saved.done);
       unitSession.feedbackText = saved.feedbackText || "";
       unitSession.awaitingNext = Boolean(saved.awaitingNext);
+      unitSession.allQuestions = saved.allQuestions || [];
+      unitSession.qIndex = saved.qIndex || 0;
       current.activeUnitId = saved.unitId;
+
+      // Sync backend so /api/answer works
+      try {
+        await fetch("/api/unit/resume", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            unit_id: saved.unitId,
+            questions: saved.allQuestions,
+            q_index: saved.qIndex,
+            lessons: saved.lessons,
+            coins: saved.coins || current.coins || 0,
+          }),
+        });
+      } catch (err) {
+        console.error("Failed to resume backend quiz state:", err);
+      }
+
       renderUnitLesson(unitSession.unitMeta, unitSession.lessons);
       setStep("lesson");
       persistQuizProgress();
       return;
+    }
+    // If saved data exists but has no questions, clear it and start fresh
+    if (saved) {
+      clearQuizProgress(unitId);
     }
     isUnitLoading = true;
     setUnitLoading(true);
@@ -508,10 +591,22 @@ document.addEventListener("DOMContentLoaded", () => {
       unitSession.done = false;
       unitSession.feedbackText = "";
       unitSession.awaitingNext = false;
+      unitSession.allQuestions = data.all_questions || [];
+      unitSession.qIndex = 0;
 
       renderUnitLesson(unitSession.unitMeta, unitSession.lessons);
       setStep("lesson");
       persistQuizProgress();
+
+      // Save unit progress to Firestore
+      if (current.uid) {
+        ProgressTracker.saveProgress({
+          topic: current.topic,
+          progress: current.progress,
+          coins: current.coins,
+          activeUnitId: current.activeUnitId,
+        });
+      }
     } catch (err) {
       pathStatus.textContent = err.message;
     } finally {
@@ -608,6 +703,7 @@ document.addEventListener("DOMContentLoaded", () => {
       unitSession.done = Boolean(data.done);
       if (unitSession.done) unitSession.pendingNextQuestion = null;
       unitSession.awaitingNext = true;
+      unitSession.qIndex = (unitSession.qIndex || 0) + 1;
       current.activeUnitId = data.active_unit_id || current.activeUnitId;
 
       if (unitSession.done) {
@@ -618,6 +714,24 @@ document.addEventListener("DOMContentLoaded", () => {
         clearQuizProgress(unitSession.unitId);
       } else {
         persistQuizProgress();
+      }
+
+      // Save progress to Firestore on every answer
+      if (current.uid) {
+        ProgressTracker.saveProgress({
+          topic: current.topic,
+          progress: current.progress,
+          coins: current.coins,
+          activeUnitId: current.activeUnitId,
+        });
+        ProgressTracker.saveSession(current.topic, {
+          progress: current.progress,
+          coins: current.coins,
+          active_unit_id: current.activeUnitId,
+          lessons: unitSession.lessons,
+          questions: unitSession.allQuestions,
+          q_index: unitSession.qIndex,
+        });
       }
     } catch (err) {
       quizStatus.textContent = err.message;

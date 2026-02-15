@@ -20,7 +20,13 @@ from session_state import default_state
 
 #Firebase Imports
 import firebase_admin
-from firestore_db import *
+from firestore_db import (
+    init_firestore, get_firestore_client, upsert_user,
+    save_learning_path, get_learning_path,
+    save_progress, get_progress,
+    save_session_state, get_session_state,
+    get_all_topics_for_user, delete_user_data
+)
 from firebase_admin import credentials, auth
 
 # Load .env if present (local/dev)
@@ -160,23 +166,69 @@ def start():
 
     if not topic:
         return jsonify({"error": "Topic is required"}), 400
-    pathway = generate_pathway(topic=topic)
-    learning_path = extract_learning_path(pathway)
-    unit_order, unit_meta_obj = flatten_units(learning_path)
-    unit_meta = {unit_id: meta.to_dict() for unit_id, meta in unit_meta_obj.items()}
+
+    uid = session.get("uid")
+
+    # Try to load existing learning path
+    learning_path = None
+    unit_order = []
+    unit_meta = {}
+
+    if uid:
+        try:
+            saved_path = get_learning_path(uid, topic)
+            if saved_path:
+                learning_path = saved_path.get("learning_path")
+                unit_order = saved_path.get("unit_order", [])
+                unit_meta = saved_path.get("unit_meta", {})
+        except Exception as exc:
+            print(f"Warning: Failed to load saved learning path: {exc}")
+
+    # Generate new path if not saved
+    if not learning_path:
+        pathway = generate_pathway(topic=topic)
+        learning_path = extract_learning_path(pathway)
+        unit_order, unit_meta_obj = flatten_units(learning_path)
+        unit_meta = {unit_id: meta.to_dict() for unit_id, meta in unit_meta_obj.items()}
+
+        # Save the generated path
+        if uid:
+            try:
+                save_learning_path(uid, topic, learning_path, unit_meta, unit_order)
+            except Exception as exc:
+                print(f"Warning: Failed to save learning path: {exc}")
+
+    # Build fresh progress, then overlay any saved progress from Firestore
+    progress = init_progress(unit_order)
+    saved_coins = 0
+    saved_active_unit = None
+
+    if uid:
+        try:
+            saved = get_progress(uid, topic)
+            if saved:
+                saved_units = saved.get("units", {})
+                for uid_key, status_data in saved_units.items():
+                    if uid_key in progress:
+                        progress[uid_key] = status_data
+                saved_coins = saved.get("coins", 0)
+                saved_active_unit = saved.get("active_unit_id")
+        except Exception as exc:
+            print(f"Warning: Failed to load saved progress: {exc}")
 
     state = _get_state()
     state.clear()
     state.update(default_state())
     state["user"] = username
-    state["uid"] = session.get("uid")
+    state["uid"] = uid
     state["topic"] = topic
     state["use_tutor"] = use_tutor
     state["learning_path"] = learning_path
     state["unit_order"] = unit_order
     state["unit_meta"] = unit_meta
-    state["progress"] = init_progress(unit_order)
-    state["active_unit_id"] = None
+    state["progress"] = progress
+    state["coins"] = saved_coins
+    state["active_unit_id"] = saved_active_unit
     state["lessons"] = []
     state["questions"] = []
     state["q_index"] = 0
@@ -185,7 +237,8 @@ def start():
         "topic": topic,
         "use_tutor": use_tutor,
         "pathway": {"learning_path": learning_path},
-        "progress": state["progress"],
+        "progress": progress,
+        "coins": saved_coins,
         "unit_order": unit_order,
         "unit_meta": unit_meta,
     })
@@ -261,6 +314,118 @@ def check_auth():
         return jsonify({"authenticated": False}), 200
 
 
+@app.get("/api/topics")
+def get_topics():
+    """Get list of topics the user has started."""
+    uid = session.get("uid")
+    if not uid:
+        return jsonify({"topics": []}), 200
+
+    try:
+        topics = get_all_topics_for_user(uid)
+        return jsonify({"topics": topics}), 200
+    except Exception as exc:
+        print(f"Warning: Failed to get topics: {exc}")
+        return jsonify({"topics": []}), 200
+
+
+@app.post("/api/save-progress")
+def save_progress_endpoint():
+    """Save current session progress to Firestore."""
+    uid = session.get("uid")
+    if not uid:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    data = request.get_json(force=True) or {}
+    topic = data.get("topic")
+    progress = data.get("progress", {})
+    coins = data.get("coins", 0)
+    active_unit_id = data.get("active_unit_id")
+
+    if not topic:
+        return jsonify({"error": "Topic is required"}), 400
+
+    try:
+        save_progress(uid, topic, progress, coins, active_unit_id)
+        return jsonify({"status": "saved"}), 200
+    except Exception as exc:
+        print(f"Warning: Failed to save progress: {exc}")
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.get("/api/load-progress/<topic>")
+def load_progress(topic):
+    """Load saved progress for a topic."""
+    uid = session.get("uid")
+    if not uid:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    try:
+        progress = get_progress(uid, topic)
+        if progress:
+            return jsonify(progress), 200
+        else:
+            return jsonify({"error": "No saved progress"}), 404
+    except Exception as exc:
+        print(f"Warning: Failed to load progress: {exc}")
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.post("/api/save-session")
+def save_session_endpoint():
+    """Save complete session state (for resume functionality)."""
+    uid = session.get("uid")
+    if not uid:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    data = request.get_json(force=True) or {}
+    topic = data.get("topic")
+    session_data = data.get("session", {})
+
+    if not topic:
+        return jsonify({"error": "Topic is required"}), 400
+
+    try:
+        save_session_state(uid, topic, session_data)
+        return jsonify({"status": "saved"}), 200
+    except Exception as exc:
+        print(f"Warning: Failed to save session: {exc}")
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.get("/api/load-session/<topic>")
+def load_session(topic):
+    """Load saved session state for a topic."""
+    uid = session.get("uid")
+    if not uid:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    try:
+        session_state = get_session_state(uid, topic)
+        if session_state:
+            return jsonify(session_state), 200
+        else:
+            return jsonify({"error": "No saved session"}), 404
+    except Exception as exc:
+        print(f"Warning: Failed to load session: {exc}")
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.delete("/api/delete-data")
+def delete_data():
+    """Delete all saved user data (learning paths, progress, sessions)."""
+    uid = session.get("uid")
+    if not uid:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    try:
+        deleted = delete_user_data(uid)
+        return jsonify({"status": "deleted", "deleted": deleted}), 200
+    except Exception as exc:
+        print(f"Warning: Failed to delete user data: {exc}")
+        return jsonify({"error": str(exc)}), 500
+
+
 @app.get("/api/pathway")
 def get_pathway():
     state = _get_state()
@@ -326,9 +491,44 @@ def start_unit():
         "unit_meta": unit_meta,
         "lessons": lessons,
         "question": questions[0],
+        "all_questions": questions,
         "coins": state.get("coins", 0),
         "progress": state.get("progress", {}),
     })
+
+
+@app.post("/api/unit/resume")
+def resume_unit():
+    """Resume a quiz mid-way by restoring backend state from the frontend."""
+    data = request.get_json(force=True) or {}
+    unit_id = (data.get("unit_id") or "").strip()
+    questions = data.get("questions", [])
+    q_index = data.get("q_index", 0)
+    lessons = data.get("lessons", [])
+    coins = data.get("coins", 0)
+
+    if not unit_id:
+        return jsonify({"error": "unit_id is required"}), 400
+    if not questions:
+        return jsonify({"error": "questions are required"}), 400
+
+    state = _get_state()
+    if not state.get("learning_path"):
+        return jsonify({"error": "Start a topic first"}), 400
+
+    state["active_unit_id"] = unit_id
+    state["questions"] = questions
+    state["q_index"] = q_index
+    state["lessons"] = lessons
+    state["coins"] = coins
+
+    progress = state.get("progress", {}) or {}
+    progress.setdefault(unit_id, {})
+    if progress[unit_id].get("status") != "completed":
+        progress[unit_id]["status"] = "unlocked"
+    state["progress"] = progress
+
+    return jsonify({"status": "resumed", "q_index": q_index}), 200
 
 
 @app.post("/api/answer")
@@ -360,7 +560,7 @@ def answer():
     if correct:
         state["coins"] = state.get("coins", 0) + 10
     else:
-        state["coins"] = state.get("coins", 0) - 5
+        state["coins"] = max(state.get("coins", 0) - 5, 0)
 
     feedback = None
     if (not correct) and state.get("use_tutor"):
