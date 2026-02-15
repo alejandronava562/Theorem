@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Auto-fill username input
       if (usernameInput) {
         usernameInput.value = displayName;
-        usernameInput.dispatchEvent(new Event("input"));
+        usernameInput.dispatchEvent(new Event("input", { bubbles: true }));
       }
     } else {
       googleSignInButton.classList.remove("hidden");
@@ -795,11 +795,11 @@ document.addEventListener("DOMContentLoaded", () => {
   checkBackendAuth().then((backendAuth) => {
     if (backendAuth && backendAuth.name && usernameInput) {
       usernameInput.value = backendAuth.name;
-      usernameInput.dispatchEvent(new Event("input"));
+      usernameInput.dispatchEvent(new Event("input", { bubbles: true }));
     }
     // Trigger initial validation in case backend auth wasn't found
     if (usernameInput) {
-      usernameInput.dispatchEvent(new Event("input"));
+      usernameInput.dispatchEvent(new Event("input", { bubbles: true }));
     }
   });
 

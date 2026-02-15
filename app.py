@@ -44,7 +44,11 @@ def _resolve_firebase_credentials():
     if cred_path:
         expanded = os.path.expanduser(cred_path)
         if os.path.exists(expanded):
-            return "path", expanded
+            return "path", os.path.abspath(expanded)
+        # Try relative to project directory
+        project_rel = os.path.join(os.path.dirname(__file__), expanded)
+        if os.path.exists(project_rel):
+            return "path", os.path.abspath(project_rel)
 
     local_path = os.path.join(os.path.dirname(__file__), "service-account.json")
     if os.path.exists(local_path):

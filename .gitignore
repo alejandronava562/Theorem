@@ -1,5 +1,38 @@
-#secrets
+# Secrets & credentials
 .env
 *.env
 theorem-8a4e5-firebase-adminsdk-fbsvc-f725505474.json
 service-account.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS files
+desktop.ini
+ehthumbs.db
+
+# Logs
+*.log
+
+# Node (if any frontend tooling)
+node_modules/
