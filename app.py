@@ -434,7 +434,7 @@ def get_pathway():
     return jsonify({"learning_path": state["learning_path"]})
 
 @app.get("/api/progress")
-def get_progress():
+def get_progress_endpoint():
     state = _get_state()
     if not state.get("learning_path"):
         return jsonify({"error": "No learning path generated yet"}), 404

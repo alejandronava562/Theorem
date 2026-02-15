@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const userName = document.querySelector("#user-name");
   const deleteDataSection = document.querySelector("#delete-data-section");
   const deleteDataBtn = document.querySelector("#delete-data-btn");
+  const userAvatar = document.querySelector("#user-avatar");
 
   // AUTH HELPER FUNCTIONS
   function setAuthUI(user) {
@@ -31,6 +32,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (deleteDataSection) deleteDataSection.classList.remove("hidden");
       const displayName = user.displayName || user.email || "Signed In";
       userName.textContent = displayName;
+      if (userAvatar) {
+        const photo = user.photoURL || "";
+        userAvatar.src = photo;
+        userAvatar.style.display = photo ? "" : "none";
+      }
       // Auto-fill username input
       if (usernameInput) {
         usernameInput.value = displayName;
@@ -41,6 +47,10 @@ document.addEventListener("DOMContentLoaded", () => {
       userInfo.classList.add("hidden");
       if (deleteDataSection) deleteDataSection.classList.add("hidden");
       userName.textContent = "";
+      if (userAvatar) {
+        userAvatar.src = "";
+        userAvatar.style.display = "none";
+      }
     }
   }
 
