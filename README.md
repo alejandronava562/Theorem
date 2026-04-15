@@ -1,3 +1,10 @@
+# Theorem
+Theorem is an interactive and personalized learning application that teaches mathematics in a fun, engaging way.
+
+# Deployment Link
+https://paicteam1.onrender.com/
+
+# Flow Chart
 ```mermaid
 flowchart LR
     A[User Browser] --> B[Flask API app.py]
@@ -21,5 +28,4 @@ flowchart LR
 
 ```
 
-# Deployment Link
-https://paicteam1.onrender.com/
+
