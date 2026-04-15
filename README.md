@@ -19,7 +19,6 @@ flowchart LR
 
     I --> N[AI Model]
 
-    style B fill:#cce5ff,stroke:#333,stroke-width:2px
 ```
 
 # Deployment Link
