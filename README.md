@@ -1,8 +1,8 @@
 # Theorem
 Theorem is an interactive and personalized learning application that teaches mathematics in a fun, engaging way.
 
-# Deployment Link
-https://paicteam1.onrender.com/
+## Deployment Link
+To access the application, click this link: [www.theorem.com](https://paicteam1.onrender.com)
 
 # Flow Chart
 ```mermaid
