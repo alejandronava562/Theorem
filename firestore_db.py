@@ -18,7 +18,7 @@ from typing import Optional, Dict, Any
 # Global Firestore client
 _db = None
 
-
+# Initialize Firestore client 
 def init_firestore(
     credentials_info: Optional[Dict[str, Any]] = None,
     credentials_path: Optional[str] = None,
@@ -43,7 +43,7 @@ def get_firestore_client():
         init_firestore()
     return _db
 
-
+# Create or update user profile (stores basic info and last login)
 def upsert_user(uid: str, email: str, display_name: str, photo_url: Optional[str] = None) -> Dict[str, Any]:
     """
     Create or update a user document in Firestore.
@@ -86,7 +86,7 @@ def upsert_user(uid: str, email: str, display_name: str, photo_url: Optional[str
 
     
 
-
+# Fetch user profile by UID 
 def get_user(uid: str) -> Optional[Dict[str, Any]]:
     """
     Get user profile from Firestore.
@@ -112,7 +112,7 @@ def get_user(uid: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-
+# Save user progress for a topic (units status, coins, active unit)
 def save_progress(uid: str, topic: str, units: Dict[str, str], coins: int, active_unit_id: Optional[str] = None) -> None:
     """
     Save user progress for a specific topic to Firestore.
@@ -134,7 +134,7 @@ def save_progress(uid: str, topic: str, units: Dict[str, str], coins: int, activ
         'updated_at': firestore.SERVER_TIMESTAMP
     }, merge=True)
 
-
+# Load saved progress for a topic
 def get_progress(uid: str, topic: str) -> Optional[Dict[str, Any]]:
     """
     Get user progress for a specific topic from Firestore.
@@ -154,7 +154,7 @@ def get_progress(uid: str, topic: str) -> Optional[Dict[str, Any]]:
         return doc.to_dict()
     return None
 
-
+# Save generated learning path and unit metadata for a topic
 def save_learning_path(uid: str, topic: str, learning_path: Dict[str, Any], unit_meta: Dict[str, Any], unit_order: list) -> None:
     """
     Save the AI-generated learning path outline for a topic.
@@ -177,7 +177,7 @@ def save_learning_path(uid: str, topic: str, learning_path: Dict[str, Any], unit
         'updated_at': firestore.SERVER_TIMESTAMP
     }, merge=True)
 
-
+# Load saved learning path for a topic
 def get_learning_path(uid: str, topic: str) -> Optional[Dict[str, Any]]:
     """
     Retrieve saved learning path for a topic.
@@ -197,7 +197,7 @@ def get_learning_path(uid: str, topic: str) -> Optional[Dict[str, Any]]:
         return doc.to_dict()
     return None
 
-
+# Save full session state 
 def save_session_state(uid: str, topic: str, session_data: Dict[str, Any]) -> None:
     """
     Save complete session state for a topic (progress, coins, active unit, lessons, etc.).
@@ -220,7 +220,7 @@ def save_session_state(uid: str, topic: str, session_data: Dict[str, Any]) -> No
         'updated_at': firestore.SERVER_TIMESTAMP
     }, merge=True)
 
-
+# Load saved session state for a topic
 def get_session_state(uid: str, topic: str) -> Optional[Dict[str, Any]]:
     """
     Retrieve saved session state for a topic.
@@ -240,7 +240,7 @@ def get_session_state(uid: str, topic: str) -> Optional[Dict[str, Any]]:
         return doc.to_dict()
     return None
 
-
+# Delete all user-related data across subcollections
 def delete_user_data(uid: str) -> Dict[str, int]:
     """
     Delete all saved data for a user (learning paths, progress, sessions).
@@ -265,7 +265,7 @@ def delete_user_data(uid: str) -> Dict[str, int]:
 
     return deleted
 
-
+# List all topics the user has started
 def get_all_topics_for_user(uid: str) -> list:
     """
     Get list of all topics the user has started.
