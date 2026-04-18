@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
 from functools import lru_cache
+# Loads OpenAI API key from environment or local .env file (with caching)
 
-
+# Reads key-value pairs from .env file into a dictionary
 def _parse_env_file(env_path: Path) -> dict:
     data = {}
     try:
@@ -20,6 +21,7 @@ def _parse_env_file(env_path: Path) -> dict:
 
 
 @lru_cache(maxsize=1)
+# Returns OpenAI API key (checks env first, then .env file, caches result)
 def get_openai_api_key() -> str:
     api_key = os.getenv("OPENAI_API_KEY")
     if api_key:
