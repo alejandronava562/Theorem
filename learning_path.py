@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
-
-
+# Processes learning path structure and prepares unit order, metadata, and progress
+# Extracts learning_path from AI response (handles wrapped or direct formats)
 def extract_learning_path(pathway: Dict[str, Any]) -> Dict[str, Any]:
     lp = pathway.get("learning_path")
     if isinstance(lp, dict):
         return lp
     return pathway
 
-
+# Data structure for unit metadata (level, title, skills, etc.)
 @dataclass(frozen=True)
 class UnitMeta:
     unit_id: str
@@ -30,7 +30,7 @@ class UnitMeta:
             "skills": list(self.skills),
         }
 
-
+# Builds unique unit ID (e.g., L1U2) from level and unit numbers
 def build_unit_id(level_num: Any, unit_num: Any) -> str:
     try:
         level_int = int(level_num)
@@ -42,7 +42,7 @@ def build_unit_id(level_num: Any, unit_num: Any) -> str:
         unit_int = 0
     return f"L{level_int}U{unit_int}"
 
-
+# Flattens nested learning path into ordered unit list and metadata map
 def flatten_units(learning_path: Dict[str, Any]) -> Tuple[List[str], Dict[str, UnitMeta]]:
     order: List[str] = []
     meta: Dict[str, UnitMeta] = {}
@@ -70,14 +70,14 @@ def flatten_units(learning_path: Dict[str, Any]) -> Tuple[List[str], Dict[str, U
 
     return order, meta
 
-
+# Initializes progress (locks all units, unlocks the first one)
 def init_progress(unit_order: List[str]) -> Dict[str, Dict[str, Any]]:
     progress = {unit_id: {"status": "locked"} for unit_id in unit_order}
     if unit_order:
         progress[unit_order[0]]["status"] = "unlocked"
     return progress
 
-
+# Returns next unit ID in sequence 
 def next_unit_id(unit_order: List[str], current_unit_id: str) -> Optional[str]:
     try:
         idx = unit_order.index(current_unit_id)
