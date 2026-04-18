@@ -40,23 +40,31 @@ flowchart TD
 flowchart LR
     A[User Browser] --> B[Flask API app.py]
 
-    B --> C[API start - Learning Path]
-    B --> D[API unit - Quiz]
-    B --> E[API answer - Coins]
-    B --> F[API auth]
+    %% API routes
+    B --> C[Start Topic]
+    B --> D[Start Unit]
+    B --> E[Answer Question]
+    B --> F[Auth]
 
+    %% Generators
     C --> G[Path Generator]
     D --> H[Unit Generator]
     E --> I[AI Tutor]
 
+    %% State
     B --> J[Session Memory]
     B --> K[Firestore DB]
 
-    K --> L[User Data]
+    %% Firestore data
+    K --> L[Users]
     K --> M[Progress]
+    K --> N[Learning Paths]
+    K --> O[Sessions]
 
-    I --> N[AI Model]
-
+    %% AI usage
+    G --> P[AI Model]
+    H --> P
+    I --> P
 ```
 
 
