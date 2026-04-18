@@ -3,7 +3,7 @@
 #   unit_generator.py, tutor_helper.py, env_loader.py
 # This Flask layer only adapts the CLI flow into HTTP.
 # No extra features beyond: choose topic, optional AI tutor, generate unit, take quiz, track coins.
-
+# Flask API backend for learning app (topic → units → quiz → progress tracking)
 from flask import Flask, render_template, request, jsonify, session
 from typing import Dict, Any, Optional
 import os
@@ -31,7 +31,7 @@ from firebase_admin import credentials, auth
 
 # Load .env if present (local/dev)
 load_dotenv()
-
+# Resolve Firebase credentials from env, file path, or local config
 def _resolve_firebase_credentials():
     firebase_creds_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
     if firebase_creds_json:
@@ -78,7 +78,7 @@ try:
 except Exception as exc:
     print(f"Warning: Firestore not initialized: {exc}")
 
-
+# Simple check to confirm Firestore connection is working
 def _validate_firestore_connection() -> None:
     try:
         client = get_firestore_client()
@@ -89,14 +89,14 @@ def _validate_firestore_connection() -> None:
 
 
 _validate_firestore_connection()
-
+# Initialize Flask app and session secret
 app = Flask(__name__, static_folder="static", static_url_path="/static")
 app.secret_key = "dev-secret-change-me"  # needed for session cookies
 
 # In-memory per-session state
 SESSIONS: Dict[str, Dict[str, Any]] = {}
 
-
+# Get or create unique session ID stored in cookie
 def _get_session_id() -> str:
     sid = session.get("sid")
     if not sid:
@@ -104,14 +104,14 @@ def _get_session_id() -> str:
         session["sid"] = sid
     return sid
 
-
+# Retrieve or initialize session state for current user
 def _get_state() -> Dict[str, Any]:
     sid = _get_session_id()
     if sid not in SESSIONS:
         SESSIONS[sid] = {}
     return SESSIONS[sid]
 
-
+# Helpers to extract lessons and quiz questions from unit content
 def _extract_quiz_questions(lessoncontent: list) -> list:
     quizzes = [item for item in lessoncontent if item.get("TYPE") == "QUIZ"]
     if not quizzes:
@@ -123,7 +123,7 @@ def _extract_quiz_questions(lessoncontent: list) -> list:
 def _extract_lessons(lessoncontent: list) -> list:
     return [item for item in lessoncontent if item.get("TYPE") == "LESSON"]
 
-
+# Build AI tutor feedback for incorrect answers
 def _build_tutor_feedback(question_data: Dict[str, Any], user_answer: str) -> Optional[Dict[str, Any]]:
     options = question_data.get("OPTIONS", {}) or {}
     option_lines = "\n".join(f"{key} {text}" for key, text in options.items())
@@ -156,7 +156,7 @@ def _build_tutor_feedback(question_data: Dict[str, Any], user_answer: str) -> Op
 def index():
     return render_template("index.html")
 
-
+# Start topic: load/generate learning path and initialize progress
 @app.post("/api/start")
 def start():
     data = request.get_json(force=True) or {}
@@ -247,7 +247,7 @@ def start():
         "unit_meta": unit_meta,
     })
     
-
+# Return current session state (progress, question, coins, etc.)
 @app.get("/api/state")
 def get_state():
     state = _get_state()
@@ -272,7 +272,7 @@ def get_state():
         "coins": state.get("coins", 0),
         "done": q is None,
     })
-
+# Firebase authentication: login
 @app.post("/api/auth")
 def auth_login():
     data = request.get_json(force=True) or {}
@@ -300,13 +300,13 @@ def auth_login():
     except Exception as exc:
         return jsonify({"error": f"Invalid token: {exc}"}), 401
 
-
+# Firebase authentication: logout
 @app.post("/api/logout")
 def auth_logout():
     session.clear()
     return jsonify({"status": "logged out"}), 200
 
-
+# Firebase authentication: session check
 @app.get("/api/check-auth")
 def check_auth():
     uid = session.get("uid")
@@ -317,7 +317,7 @@ def check_auth():
     else:
         return jsonify({"authenticated": False}), 200
 
-
+# Get list of topics user has started
 @app.get("/api/topics")
 def get_topics():
     """Get list of topics the user has started."""
@@ -332,7 +332,7 @@ def get_topics():
         print(f"Warning: Failed to get topics: {exc}")
         return jsonify({"topics": []}), 200
 
-
+# Save progress (units, coins, active unit) to Firestore
 @app.post("/api/save-progress")
 def save_progress_endpoint():
     """Save current session progress to Firestore."""
@@ -356,7 +356,7 @@ def save_progress_endpoint():
         print(f"Warning: Failed to save progress: {exc}")
         return jsonify({"error": str(exc)}), 500
 
-
+# Load saved progress for a topic
 @app.get("/api/load-progress/<topic>")
 def load_progress(topic):
     """Load saved progress for a topic."""
@@ -374,7 +374,7 @@ def load_progress(topic):
         print(f"Warning: Failed to load progress: {exc}")
         return jsonify({"error": str(exc)}), 500
 
-
+# Save full session state for resume functionality
 @app.post("/api/save-session")
 def save_session_endpoint():
     """Save complete session state (for resume functionality)."""
@@ -396,7 +396,7 @@ def save_session_endpoint():
         print(f"Warning: Failed to save session: {exc}")
         return jsonify({"error": str(exc)}), 500
 
-
+# Load saved session state for a topic
 @app.get("/api/load-session/<topic>")
 def load_session(topic):
     """Load saved session state for a topic."""
@@ -414,7 +414,7 @@ def load_session(topic):
         print(f"Warning: Failed to load session: {exc}")
         return jsonify({"error": str(exc)}), 500
 
-
+# Delete all user data from Firestore
 @app.delete("/api/delete-data")
 def delete_data():
     """Delete all saved user data (learning paths, progress, sessions)."""
@@ -429,14 +429,14 @@ def delete_data():
         print(f"Warning: Failed to delete user data: {exc}")
         return jsonify({"error": str(exc)}), 500
 
-
+# Return current learning path
 @app.get("/api/pathway")
 def get_pathway():
     state = _get_state()
     if not state.get("learning_path"):
         return jsonify({"error": "No learning path generated yet"}), 404
     return jsonify({"learning_path": state["learning_path"]})
-
+# Return progress, coins, and active unit
 @app.get("/api/progress")
 def get_progress_endpoint():
     state = _get_state()
@@ -448,7 +448,7 @@ def get_progress_endpoint():
         "active_unit_id": state.get("active_unit_id"),
     })
 
-
+# Generate and start a unit (lessons + quiz)
 @app.post("/api/unit/start")
 def start_unit():
     data = request.get_json(force=True) or {}
@@ -500,7 +500,7 @@ def start_unit():
         "progress": state.get("progress", {}),
     })
 
-
+# Restore quiz state mid-progress
 @app.post("/api/unit/resume")
 def resume_unit():
     """Resume a quiz mid-way by restoring backend state from the frontend."""
@@ -534,7 +534,7 @@ def resume_unit():
 
     return jsonify({"status": "resumed", "q_index": q_index}), 200
 
-
+# Process answer, update coins, advance quiz, unlock units
 @app.post("/api/answer")
 def answer():
     data = request.get_json(force=True) or {}
