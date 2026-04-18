@@ -3,7 +3,8 @@ import json
 from typing import Dict, Any
 
 from env_loader import get_openai_api_key
-
+# Generates lesson content and quiz for a unit using OpenAI
+# Prompt template defining JSON format for lesson + quiz generation
 SYSTEM_UNIT = """
 You are a Duolingo-style micro-lesson + quiz generator.
 Output ONLY valid JSON matching this exact schema:
@@ -78,11 +79,11 @@ You are a curriculum generator for the subject of Algebra. Output a strict JSON 
 }
 """
 
-
+# Creates OpenAI client using API key
 def _client():
     return OpenAI(api_key=get_openai_api_key())
 
-
+# Calls OpenAI to generate a unit (lesson + 5-question quiz)
 def generate_unit(
     topic: str,
     model: str = "gpt-4o-mini",
@@ -110,7 +111,7 @@ def generate_unit(
         raise ValueError("Model returned no content in message.content")
     return json.loads(content)
 
-
+# Generates standalone quiz (mainly for testing use)
 def generate_quiz(topic: str = "Algebra", model: str = "gpt-4o-mini") -> Dict[str, Any]:
     client = _client()
     response = client.chat.completions.create(
