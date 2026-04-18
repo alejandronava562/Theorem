@@ -1,5 +1,6 @@
 from typing import Any, Dict, Optional
-
+# Defines default session state structure and helper to restore state
+# Returns initial session state with default values
 def default_state() -> Dict[str, Any]:
     return {
         "user": None,
@@ -15,7 +16,7 @@ def default_state() -> Dict[str, Any]:
         "questions": [],
         "q_index" : 0,
     }
-
+# Merges saved state with defaults to ensure all fields exist
 def hydrate(raw: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     state = default_state()
     if raw:
