@@ -2,7 +2,8 @@ from typing import Callable, Dict, Optional
 from unit_generator import generate_unit, generate_quiz
 from tutor_helper import ai_tutor_reply
 from quiz import run_quiz, TutorCallback
-
+# Testing file for generating a unit and running a quiz with AI 
+# Generate AI feedback for incorrect quiz answers
 def build_tutor_callback() -> TutorCallback:
     """Return a function that describes the mistake and calls ai_tutor_reply."""
     def callback(question_data: Dict[str, str], user_answer: str) -> Optional[str]:
@@ -29,7 +30,7 @@ def build_tutor_callback() -> TutorCallback:
             return f"[Tutor error: {exc}]"
 
     return callback
-
+# Main entry point: prompts topic, generates unit, runs quiz, tracks coins
 def main():
     topic = input("What topic should this unit cover?\n")
     use_tutor = input("Enable AI tutor explanations? (Y/N): ").strip().lower().startswith('y')
