@@ -1,11 +1,12 @@
 import json
 from typing import Callable, Dict, Optional
-
+# CLI quiz runner: displays questions, collects answers, updates coin score
+# Callback type for AI tutor feedback on incorrect answers
 TutorCallback = Callable[[Dict[str,str],str], Optional[str]]
-
+# Runs quiz from lesson content and returns total coins earned
 def run_quiz(lessoncontent: list, input_fn=input, print_fn=print, tutor_callback : Optional[TutorCallback] = None) -> int:
     """
-    
+    # Extract quiz section from lesson content
     """
     coins = 0   
     quizzes= [data for data in lessoncontent if data.get("TYPE") == "QUIZ"]
@@ -17,10 +18,11 @@ def run_quiz(lessoncontent: list, input_fn=input, print_fn=print, tutor_callback
     questions = quiz["QUESTIONS"]
 
     for q in questions:
+        # Display question and options, then validate user input
         print_fn(f'\nQ{q["QUESTION_NUMBER"]}. {q["QUESTION"]}')
         for option_key in ["A", "B", "C", "D"]:
             print_fn(f'{option_key} {q["OPTIONS"][option_key]}')
-          
+        # Update coins based on correctness and optionally call tutor  
         answer = input_fn("> :").strip().upper()
         while answer not in ["A","B","C","D"]:
             print_fn("Please enter A, B, C, or D")
