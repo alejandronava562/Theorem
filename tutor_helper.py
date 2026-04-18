@@ -3,7 +3,8 @@ import json
 from typing import Any, Dict
 
 from env_loader import get_openai_api_key
-
+# AI tutor helper: generates feedback and explanations for incorrect answers
+# Prompt template defining JSON format for tutor responses
 SYSTEM_TUTOR = """
 You are a friendly tutor that helps users when they get a quiz question wrong.
 Output ONLY valid JSON matching this exact schema:
@@ -20,11 +21,11 @@ Rules:
 - Keep it concise.
 """
 
-
+# Creates OpenAI client using API key from env_loader
 def _client():
     return OpenAI(api_key=get_openai_api_key())
 
-
+# Calls OpenAI to generate tutor feedback based on question and user answer
 def ai_tutor_reply(question: str, context: str, model: str = "gpt-4o-mini") -> Dict[str, Any]:
     client = _client()
     response = client.chat.completions.create(
