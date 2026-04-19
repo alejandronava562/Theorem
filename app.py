@@ -162,7 +162,7 @@ def start():
     data = request.get_json(force=True) or {}
     topic = (data.get("topic") or "").strip()
     username = (data.get("username") or "").strip() or None
-    use_tutor = bool(data.get("use_tutor", False))
+    use_tutor = bool(data.get("use_tutor", True))
 
     # Use authenticated user info if available
     if not username:
