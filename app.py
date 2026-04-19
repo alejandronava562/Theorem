@@ -567,7 +567,8 @@ def answer():
         state["coins"] = max(state.get("coins", 0) - 5, 0)
 
     feedback = None
-    if (not correct) and state.get("use_tutor"):
+    #if (not correct) and state.get("use_tutor"):
+    if not correct:
         feedback = _build_tutor_feedback(q, user_answer)
 
     # Advance
